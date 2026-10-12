@@ -26,11 +26,17 @@ for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
     os.environ.setdefault(_v, "1")
 
 ROOT = Path(__file__).resolve().parent
-CONFIG = ROOT / "wallpaper.json"
-LOG = ROOT / "wallpaper.log"
-STOP_FLAG = ROOT / "wallpaper.stop"
-NOW_FLAG = ROOT / "wallpaper.now"
-OUT_DIR = ROOT / "wallpapers"
+FROZEN = getattr(sys, "frozen", False)  # собранный PyInstaller exe
+# В exe файл лежит во временной папке распаковки — данные храним в профиле пользователя.
+DATA_DIR = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "PRG" if FROZEN else ROOT
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+CONFIG = DATA_DIR / "wallpaper.json"
+LOG = DATA_DIR / "wallpaper.log"
+STOP_FLAG = DATA_DIR / "wallpaper.stop"
+NOW_FLAG = DATA_DIR / "wallpaper.now"
+# Windows не принимает обои из AppData на некоторых профилях (COMError «файл не найден»),
+# поэтому в exe картинки лежат в «Изображения\PRG\wallpapers».
+OUT_DIR = Path.home() / "Pictures" / "PRG" / "wallpapers" if FROZEN else DATA_DIR / "wallpapers"
 MUTEX_NAME = "Local\\PRG_WALLPAPER_RUNNING"
 STARTUP_LINK_NAME = "PRG Wallpaper.lnk"
 
@@ -117,7 +123,7 @@ def generate_for_monitors(cfg: dict, monitors) -> list[Path]:
     palette = cfg["palette"]
     if cfg.get("color") is None and cfg.get("hue") is None and palette in (None, "random"):
         palette = secrets.choice(list(palettes.NAMED))  # одна палитра на оба монитора
-    OUT_DIR.mkdir(exist_ok=True)
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
     stamp = time.strftime("%Y%m%d_%H%M%S")
     paths = []
     for idx, (_, w, h) in enumerate(monitors):
@@ -226,12 +232,24 @@ def _pythonw() -> str:
     return str(w if w.exists() else exe)
 
 
+def _launch_cmd(sub: str) -> list[str]:
+    """Команда запуска подкоманды этого модуля: из исходников — pythonw wallpaper.py, из exe — PRG.exe wallpaper."""
+    if FROZEN:
+        return [sys.executable, "wallpaper", sub]
+    return [_pythonw(), str(ROOT / "wallpaper.py"), sub]
+
+
+def _spawn(sub: str, flags: int) -> None:
+    # PYINSTALLER_RESET_ENVIRONMENT: дочерний exe должен быть независимым процессом со своей распаковкой,
+    # иначе он потеряет файлы, когда завершится родитель.
+    env = {**os.environ, "PYINSTALLER_RESET_ENVIRONMENT": "1"}
+    subprocess.Popen(_launch_cmd(sub), cwd=DATA_DIR, creationflags=flags, close_fds=True, env=env)
+
+
 def start_background() -> bool:
     if is_running():
         return False
-    flags = 0x00000008 | 0x00000200 | 0x08000000  # DETACHED | NEW_PROCESS_GROUP | NO_WINDOW
-    subprocess.Popen([_pythonw(), str(ROOT / "wallpaper.py"), "run"], cwd=ROOT, creationflags=flags,
-                     close_fds=True)
+    _spawn("run", 0x00000008 | 0x00000200 | 0x08000000)  # DETACHED | NEW_PROCESS_GROUP | NO_WINDOW
     return True
 
 
@@ -250,8 +268,7 @@ def change_now() -> None:
     if is_running():
         NOW_FLAG.write_text("1")
     else:
-        subprocess.Popen([_pythonw(), str(ROOT / "wallpaper.py"), "once"], cwd=ROOT,
-                         creationflags=0x08000000, close_fds=True)
+        _spawn("once", 0x08000000)  # NO_WINDOW
 
 
 # ---------- автозапуск (ярлык в папке «Автозагрузка») ----------
@@ -275,9 +292,10 @@ def set_autostart(enable: bool) -> None:
         "$s.TargetPath=$env:PRG_TARGET;$s.Arguments=$env:PRG_ARGS;$s.WorkingDirectory=$env:PRG_CWD;"
         "$s.IconLocation=$env:PRG_ICON;$s.Description='PRG wallpaper changer';$s.Save()"
     )
-    env = {**os.environ, "PRG_LNK": str(link), "PRG_TARGET": _pythonw(),
-           "PRG_ARGS": f'"{ROOT / "wallpaper.py"}" run', "PRG_CWD": str(ROOT),
-           "PRG_ICON": str(ROOT / "assets" / "prg.ico")}
+    cmd = _launch_cmd("run")
+    icon = sys.executable if FROZEN else str(ROOT / "assets" / "prg.ico")
+    env = {**os.environ, "PRG_LNK": str(link), "PRG_TARGET": cmd[0],
+           "PRG_ARGS": " ".join(f'"{c}"' for c in cmd[1:]), "PRG_CWD": str(DATA_DIR), "PRG_ICON": icon}
     subprocess.check_call(["powershell", "-NoProfile", "-Command", ps], env=env)
 
 

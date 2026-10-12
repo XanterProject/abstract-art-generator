@@ -11,3 +11,6 @@ wallpaper.now
 *.lnk
 *.pyc
 WallPaper/
+dist/
+build/
+*.spec

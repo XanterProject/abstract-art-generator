@@ -25,7 +25,13 @@
 - Плагины: новая форма или эффект — один файл.
 - GUI (Tkinter) и автосмена обоев на нескольких мониторах (Windows).
 
-## Установка
+## Готовый exe (Windows)
+Скачайте `PRG.exe` из [Releases](https://github.com/XanterProject/abstract-art-generator/releases/latest) — Python не нужен.
+Двойной щелчок открывает GUI. Результаты по умолчанию — в `Изображения\PRG`, обои для автосмены — в `Изображения\PRG\wallpapers`,
+настройки и лог — в `%LOCALAPPDATA%\PRG`. Фоновая смена обоев: `PRG.exe wallpaper start|stop|once|status|autostart on|off`.
+Собрать самому: `powershell -File build_exe.ps1` (результат — `dist\PRG.exe`).
+
+## Установка (из исходников)
 ```
 python -m venv .venv
 .venv\Scripts\pip install -r requirements.txt

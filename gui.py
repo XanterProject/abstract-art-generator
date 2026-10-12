@@ -7,6 +7,7 @@ from __future__ import annotations
 import os
 import queue
 import secrets
+import sys
 import threading
 import tkinter as tk
 from pathlib import Path
@@ -23,6 +24,8 @@ from core import generate
 
 PREVIEW_MAX = (640, 420)
 DEFAULT_ON = {"shadow", "vignette", "grain"}
+# из exe рабочая папка непредсказуема — результаты по умолчанию кладём в «Изображения\PRG»
+DEFAULT_OUT = str(Path.home() / "Pictures" / "PRG") if getattr(sys, "frozen", False) else "out"
 AUTO_OPEN_OVER = 4  # после батча больше стольких файлов папка открывается сама
 
 
@@ -102,7 +105,7 @@ class App(tk.Tk):
         box.pack(fill="x", pady=6)
         self.seed_var = tk.StringVar(value=str(secrets.randbelow(2**31)))
         self.count_var = tk.StringVar(value="4")
-        self.out_var = tk.StringVar(value="out")
+        self.out_var = tk.StringVar(value=DEFAULT_OUT)
         self.shapes_var = tk.StringVar(value="12-32")
         for r, (label, var) in enumerate((("Seed", self.seed_var), ("Кол-во", self.count_var),
                                           ("Фигур", self.shapes_var))):
@@ -311,5 +314,9 @@ class App(tk.Tk):
         self._run_bg(lambda: run_batch(spec, count, seed, out_dir, workers=1, on_progress=on_progress), done)
 
 
-if __name__ == "__main__":
+def main():
     App().mainloop()
+
+
+if __name__ == "__main__":
+    main()
