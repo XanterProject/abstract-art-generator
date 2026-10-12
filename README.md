@@ -5,16 +5,14 @@
 ## Примеры
 Все картинки сгенерированы проектом (палитра строится от одного доминирующего цвета, 3840×2160, здесь уменьшены).
 
-| | |
-|---|---|
-| ![bloom + glow](examples/example_1.jpg) | 
-| `bloom, glow` | `bloom, glow, vignette` |
+| |
+|---|
+| ![bloom + glow](examples/example_1.jpg) 
+| `bloom, glow` 
 | ![bloom + shadow + vignette](examples/example_3.jpg) 
-| `bloom, shadow, vignette` | `aberration, blur, glow, vignette` |
-
-![aberration + bloom + shadow](examples/example_5.jpg)
-
-`aberration, bloom, shadow`
+| `bloom, shadow, vignette` 
+| ![aberration + bloom + shadow](examples/example_5.jpg)
+| `aberration, bloom, shadow`
 
 ## Возможности
 - Формы: круг, кольцо, многоугольник, звезда, линия, блоб, волна — с антиалиасингом, градиентной заливкой и прозрачностью.
