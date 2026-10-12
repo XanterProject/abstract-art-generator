@@ -313,7 +313,11 @@ def main(argv=None) -> int:
     if a.command == "run":
         run_loop()
     elif a.command == "once":
-        change_once()
+        try:
+            change_once()
+        except Exception:  # noqa: BLE001 — в exe нет консоли, поэтому пишем в лог
+            log("ошибка разовой смены обоев:\n" + traceback.format_exc())
+            return 1
     elif a.command == "start":
         print("запущен" if start_background() else "уже запущен")
     elif a.command == "stop":
