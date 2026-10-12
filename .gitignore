@@ -1,0 +1,13 @@
+﻿.venv/
+__pycache__/
+.pytest_cache/
+out/
+out_gui/
+wallpapers/
+wallpaper.json
+wallpaper.log
+wallpaper.stop
+wallpaper.now
+*.lnk
+*.pyc
+WallPaper/
