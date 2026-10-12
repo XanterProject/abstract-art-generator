@@ -7,9 +7,9 @@
 
 | | |
 |---|---|
-| ![bloom + glow](examples/example_1.jpg) | ![bloom + glow + vignette](examples/example_2.jpg) |
+| ![bloom + glow](examples/example_1.jpg) | 
 | `bloom, glow` | `bloom, glow, vignette` |
-| ![bloom + shadow + vignette](examples/example_3.jpg) | ![aberration + blur + glow + vignette](examples/example_4.jpg) |
+| ![bloom + shadow + vignette](examples/example_3.jpg) 
 | `bloom, shadow, vignette` | `aberration, blur, glow, vignette` |
 
 ![aberration + bloom + shadow](examples/example_5.jpg)
