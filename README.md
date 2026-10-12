@@ -2,6 +2,29 @@
 
 Генератор абстрактных изображений на чистых алгоритмах (Pillow + NumPy), без ИИ.
 
+## Примеры
+Все картинки сгенерированы проектом (палитра строится от одного доминирующего цвета, 3840×2160, здесь уменьшены).
+
+| | |
+|---|---|
+| ![bloom + glow](examples/example_1.jpg) | ![bloom + glow + vignette](examples/example_2.jpg) |
+| `bloom, glow` | `bloom, glow, vignette` |
+| ![bloom + shadow + vignette](examples/example_3.jpg) | ![aberration + blur + glow + vignette](examples/example_4.jpg) |
+| `bloom, shadow, vignette` | `aberration, blur, glow, vignette` |
+
+![aberration + bloom + shadow](examples/example_5.jpg)
+
+`aberration, bloom, shadow`
+
+## Возможности
+- Формы: круг, кольцо, многоугольник, звезда, линия, блоб, волна — с антиалиасингом, градиентной заливкой и прозрачностью.
+- Эффекты: тень, свечение (поэлементные), bloom, размытие, зерно, виньетка, жидкое искажение, сдвиг оттенка, хроматическая аберрация.
+- Палитры: 12 именованных или генерация от доминирующего цвета/оттенка (схемы analogous, complementary, triadic, split, mono).
+- Любой размер холста: пресеты, `WxH`, `random`; результат не зависит от разрешения.
+- Пакетная генерация в несколько процессов, воспроизводимость по seed.
+- Плагины: новая форма или эффект — один файл.
+- GUI (Tkinter) и автосмена обоев на нескольких мониторах (Windows).
+
 ## Установка
 ```
 python -m venv .venv
