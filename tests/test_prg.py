@@ -41,7 +41,7 @@ def test_random_size_is_deterministic():
 
 def test_plugins_registered():
     registry.load_plugins()
-    assert {"circle", "blob", "wave"} <= set(registry.SHAPES)
+    assert {"circle", "blob", "wave", "crescent", "arc", "cross", "flower", "gear", "drop", "spiral", "zigzag", "rounded_rect"} <= set(registry.SHAPES)
     assert {"shadow", "glow", "grain", "bloom"} <= set(registry.EFFECTS)
 
 
