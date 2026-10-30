@@ -14,15 +14,26 @@ def _to_img(arr: np.ndarray) -> Image.Image:
 def _remap(arr: np.ndarray, sx: np.ndarray, sy: np.ndarray) -> np.ndarray:
     """Билинейная выборка arr (H, W, 3) в точках (sx, sy); за границами — крайние пиксели."""
     h, w = arr.shape[:2]
-    sx = np.clip(sx, 0, w - 1.001)
-    sy = np.clip(sy, 0, h - 1.001)
-    x0 = sx.astype(np.int32)
-    y0 = sy.astype(np.int32)
-    fx = (sx - x0)[..., None]
-    fy = (sy - y0)[..., None]
-    top = arr[y0, x0] * (1 - fx) + arr[y0, x0 + 1] * fx
-    bot = arr[y0 + 1, x0] * (1 - fx) + arr[y0 + 1, x0 + 1] * fx
-    return top * (1 - fy) + bot * fy
+    flat = arr.reshape(-1, arr.shape[2])
+    out = np.empty(sx.shape + (arr.shape[2],), dtype=np.float32)
+    # полосами по строкам: плоский индекс + np.take быстрее fancy-индексации, а временные массивы малы
+    for i in range(0, sx.shape[0], 64):
+        cx = np.clip(sx[i:i + 64], 0, w - 1.001)
+        cy = np.clip(sy[i:i + 64], 0, h - 1.001)
+        x0 = cx.astype(np.int32)
+        y0 = cy.astype(np.int32)
+        fx = (cx - x0)[..., None]
+        fy = (cy - y0)[..., None]
+        idx = y0 * w + x0
+        p00 = np.take(flat, idx, axis=0)
+        p01 = np.take(flat, idx + 1, axis=0)
+        p10 = np.take(flat, idx + w, axis=0)
+        p11 = np.take(flat, idx + (w + 1), axis=0)
+        p00 += (p01 - p00) * fx
+        p10 += (p11 - p10) * fx
+        p00 += (p10 - p00) * fy
+        out[i:i + 64] = p00
+    return out
 
 
 def _grid(w: int, h: int):
