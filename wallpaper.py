@@ -48,6 +48,7 @@ DEFAULTS = {
     "effects": "shadow,glow,vignette,grain",
     "variations": False,
     "keep": 4,          # сколько последних циклов (наборов картинок) хранить
+    "min_priority": True,   # фоновый режим (CPU+диск+память); иначе BELOW_NORMAL — заметно быстрее
 }
 
 
@@ -148,16 +149,20 @@ def cleanup(keep_cycles: int, monitors: int) -> None:
             pass
 
 
-def lower_priority() -> None:
-    """Фоновый режим процесса: низкий приоритет CPU, диска и памяти, чтобы смена обоев не тормозила систему."""
+def lower_priority(minimal: bool = True) -> None:
+    """Понижает приоритет процесса, чтобы смена обоев не тормозила систему.
+    minimal=True — фоновый режим (низкий приоритет CPU, диска и памяти, смена заметно дольше);
+    minimal=False — только BELOW_NORMAL для CPU."""
     try:
         k = _kernel32()
         k.GetCurrentProcess.restype = wintypes.HANDLE
         k.SetPriorityClass.argtypes = [wintypes.HANDLE, wintypes.DWORD]
         k.SetPriorityClass.restype = wintypes.BOOL
         me = k.GetCurrentProcess()
+        if not minimal:
+            k.SetPriorityClass(me, 0x00004000)      # BELOW_NORMAL_PRIORITY_CLASS
         # фоновый режим (низкий приоритет CPU + диска + памяти); если не вышло — хотя бы IDLE
-        if not k.SetPriorityClass(me, 0x00100000):  # PROCESS_MODE_BACKGROUND_BEGIN
+        elif not k.SetPriorityClass(me, 0x00100000):  # PROCESS_MODE_BACKGROUND_BEGIN
             k.SetPriorityClass(me, 0x00000040)      # IDLE_PRIORITY_CLASS
     except Exception as e:  # noqa: BLE001
         log(f"не удалось понизить приоритет: {e}")
@@ -309,7 +314,7 @@ def main(argv=None) -> int:
     p.add_argument("arg", nargs="?", choices=["on", "off"])
     a = p.parse_args(argv)
     if a.command in ("run", "once"):
-        lower_priority()
+        lower_priority(bool(load_config()["min_priority"]))
     if a.command == "run":
         run_loop()
     elif a.command == "once":
