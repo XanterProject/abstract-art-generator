@@ -3,16 +3,18 @@
 Генератор абстрактных изображений на чистых алгоритмах (Pillow + NumPy), без ИИ.
 
 ## Примеры
-Все картинки сгенерированы проектом (палитра строится от одного доминирующего цвета, 3840×2160, здесь уменьшены).
+Все картинки сгенерированы проектом без ИИ и ручной доработки (здесь уменьшены до 1280×720). Разные палитры, формы и эффекты.
 
-| |
-|---|
-| ![bloom + glow](examples/example_1.jpg) 
-| `bloom, glow` 
-| ![bloom + shadow + vignette](examples/example_3.jpg) 
-| `bloom, shadow, vignette` 
-| ![aberration + bloom + shadow](examples/example_5.jpg)
-| `aberration, bloom, shadow`
+| | |
+|---|---|
+| ![калейдоскоп](examples/kaleidoscope.jpg) | ![глитч](examples/glitch.jpg) |
+| `neon` · `kaleidoscope, glow, vignette` | `cyberpunk` · `glitch, aberration, bloom, grain` |
+| ![дуотон](examples/duotone.jpg) | ![лучи света](examples/light_rays.jpg) |
+| `sunset` · `duotone, vignette, grain` | `ocean` · `light_rays, bloom, vignette` |
+| ![рябь](examples/ripple.jpg) | ![геометрия](examples/geometry.jpg) |
+| `aurora` · `ripple, glow, shadow, vignette` | `pastel` · фигуры gear, cross, rounded_rect… · `shadow, outline, grain` |
+| ![полутон](examples/halftone.jpg) | ![лес](examples/forest.jpg) |
+| `retro` · `halftone, vignette` | `forest` · фигуры flower, drop, spiral… · `bloom, shadow, vignette, grain` |
 
 ## Возможности
 - Формы: круг, кольцо, многоугольник, звезда, линия, блоб, волна — с антиалиасингом, градиентной заливкой и прозрачностью.
@@ -23,12 +25,35 @@
 - Плагины: новая форма или эффект — один файл.
 - GUI (Tkinter) и автосмена обоев на нескольких мониторах (Windows).
 
+## Автосмена обоев (Windows, несколько мониторов)
+Картинка генерируется под точное разрешение каждого монитора и ставится через `IDesktopWallpaper`.
+
+Проще всего — блок «Обои рабочего стола» в окне программы: интервал смены, запуск при входе в Windows и галочка
+**«Минимальный приоритет»**. Она включена по умолчанию: смена идёт в фоновом режиме Windows и не нагружает компьютер —
+это удобно, когда свободной памяти мало. Без галочки смена проходит в несколько раз быстрее.
+
+Из консоли (для exe вместо `python wallpaper.py` пишите `PRG.exe wallpaper`):
+```
+python wallpaper.py start|stop|status      # фоновый процесс (без окна)
+python wallpaper.py once                   # сменить один раз
+python wallpaper.py autostart on|off       # ярлык в папке «Автозагрузка»
+```
+Настройки — `wallpaper.json` (интервал, палитра, цвет, эффекты, приоритет…), лог — `wallpaper.log`,
+картинки — `wallpapers/` (хранятся последние циклы). В exe настройки и лог лежат в `%LOCALAPPDATA%\PRG`,
+обои — в `Изображения\PRG\wallpapers`.
+
+> **Если Windows подвисает на несколько секунд при смене обоев** — это не генератор, а сама система:
+> включён автоматический выбор акцентного цвета по фону, и Windows пересчитывает цвет оформления
+> при каждой смене обоев. Отключите его: **Параметры → Персонализация → Цвета → «Выбор главного цвета»**
+> — поставьте «Ручной» (или снимите «Автоматический выбор главного цвета фона»). После этого смена обоев проходит без лагов.
+
 ## Готовый exe (Windows)
-Скачайте `PRG.exe` из [Releases](https://github.com/XanterProject/abstract-art-generator/releases/latest) — Python не нужен.
-Двойной щелчок открывает GUI. Результаты по умолчанию — в `Изображения\PRG`, обои для автосмены — в `Изображения\PRG\wallpapers`,
-настройки и лог — в `%LOCALAPPDATA%\PRG`. Фоновая смена обоев: `PRG.exe wallpaper start|stop|once|status|autostart on|off`.
-Галочка «Минимальный приоритет» (по умолчанию включена) запускает смену обоев в фоновом режиме Windows — для случая, когда свободной памяти мало; без неё смена идёт в несколько раз быстрее (приоритет BELOW_NORMAL).
-Собрать самому: `powershell -File build_exe.ps1` (результат — `dist\PRG.exe`).
+1. Скачайте `PRG.exe` из [Releases](https://github.com/XanterProject/abstract-art-generator/releases/latest).
+2. Запустите двойным щелчком — откроется окно программы. Python устанавливать не нужно.
+
+Готовые картинки сохраняются в папку `Изображения\PRG`.
+
+Хотите собрать exe сами? Выполните `powershell -File build_exe.ps1` — файл появится в `dist\PRG.exe`.
 
 ## Установка (из исходников)
 ```
@@ -70,22 +95,6 @@ def invert(img, rng, unit, amount=1.0):
     ...
     return img
 ```
-
-## Автосмена обоев (Windows, несколько мониторов)
-Картинка генерируется под точное разрешение каждого монитора и ставится через `IDesktopWallpaper`.
-Проще всего — блок «Обои рабочего стола» в `gui.py`. Из консоли:
-```
-python wallpaper.py start|stop|status      # фоновый процесс (без окна)
-python wallpaper.py once                   # сменить один раз
-python wallpaper.py autostart on|off       # ярлык в папке «Автозагрузка»
-```
-Настройки — `wallpaper.json` (интервал, палитра, цвет, эффекты…), лог — `wallpaper.log`,
-картинки — `wallpapers/` (хранятся последние циклы).
-
-> **Если Windows подвисает на несколько секунд при смене обоев** — это не генератор, а сама система:
-> включён автоматический выбор акцентного цвета по фону, и Windows пересчитывает цвет оформления
-> при каждой смене обоев. Отключите его: **Параметры → Персонализация → Цвета → «Выбор главного цвета»**
-> — поставьте «Ручной» (или снимите «Автоматический выбор главного цвета фона»). После этого смена обоев проходит без лагов.
 
 ## Тесты
 ```
