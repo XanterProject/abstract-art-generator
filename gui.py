@@ -29,6 +29,40 @@ DEFAULT_OUT = str(Path.home() / "Pictures" / "PRG") if getattr(sys, "frozen", Fa
 AUTO_OPEN_OVER = 4  # после батча больше стольких файлов папка открывается сама
 
 
+class Tooltip:
+    """Небольшая подсказка при наведении на виджет."""
+
+    def __init__(self, widget, text: str, delay: int = 400):
+        self.widget, self.text, self.delay = widget, text, delay
+        self._after = None
+        self._tip = None
+        widget.bind("<Enter>", self._schedule, add="+")
+        widget.bind("<Leave>", self._hide, add="+")
+        widget.bind("<ButtonPress>", self._hide, add="+")
+
+    def _schedule(self, _event=None):
+        self._after = self.widget.after(self.delay, self._show)
+
+    def _show(self):
+        if self._tip is not None:
+            return
+        x = self.widget.winfo_rootx() + 10
+        y = self.widget.winfo_rooty() + self.widget.winfo_height() + 4
+        self._tip = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(True)
+        tw.wm_geometry(f"+{x}+{y}")
+        tk.Label(tw, text=self.text, justify="left", wraplength=320, background="#ffffe1", relief="solid",
+                 borderwidth=1, padx=6, pady=4).pack()
+
+    def _hide(self, _event=None):
+        if self._after is not None:
+            self.widget.after_cancel(self._after)
+            self._after = None
+        if self._tip is not None:
+            self._tip.destroy()
+            self._tip = None
+
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -140,6 +174,13 @@ class App(tk.Tk):
         self.autostart_var = tk.BooleanVar(value=wallpaper.autostart_enabled())
         ttk.Checkbutton(box, text="Запускать при входе в Windows", variable=self.autostart_var
                         ).grid(row=0, column=2, padx=12)
+        self.minprio_var = tk.BooleanVar(value=bool(wallpaper.load_config()["min_priority"]))
+        minprio = ttk.Checkbutton(box, text="Минимальный приоритет", variable=self.minprio_var)
+        minprio.grid(row=0, column=3)
+        Tooltip(minprio, "Минимальный приоритет: смена обоев идёт в фоновом режиме Windows "
+                         "(низкий приоритет процессора, диска и памяти). Подходит, когда свободной памяти "
+                         "мало: компьютер не тормозит, но смена может занять в несколько раз больше "
+                         "времени.\nБез галочки смена идёт быстрее.")
         ttk.Button(box, text="Применить и запустить", command=self._wp_apply).grid(row=1, column=0, columnspan=2,
                                                                                   sticky="ew", pady=(6, 0))
         ttk.Button(box, text="Сменить сейчас", command=self._wp_now).grid(row=1, column=2, sticky="w",
@@ -189,7 +230,7 @@ class App(tk.Tk):
         wallpaper.save_config({
             "interval_min": interval, "palette": spec.palette or "random", "color": spec.color,
             "scheme": spec.scheme, "dominance": spec.dominance, "bg": spec.bg, "shapes": list(spec.shapes),
-            "effects": spec.effects, "variations": spec.variations,
+            "effects": spec.effects, "variations": spec.variations, "min_priority": self.minprio_var.get(),
         })
         autostart = self.autostart_var.get()
         self.wp_status.set("Применяю настройки…")
@@ -216,7 +257,8 @@ class App(tk.Tk):
         cfg = wallpaper.load_config()
         cfg.update({"palette": spec.palette or "random", "color": spec.color, "scheme": spec.scheme,
                     "dominance": spec.dominance, "bg": spec.bg, "shapes": list(spec.shapes),
-                    "effects": spec.effects, "variations": spec.variations})
+                    "effects": spec.effects, "variations": spec.variations,
+                    "min_priority": self.minprio_var.get()})
         wallpaper.save_config(cfg)
 
     def _wp_stop(self):

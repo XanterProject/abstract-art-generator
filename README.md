@@ -27,6 +27,7 @@
 Скачайте `PRG.exe` из [Releases](https://github.com/XanterProject/abstract-art-generator/releases/latest) — Python не нужен.
 Двойной щелчок открывает GUI. Результаты по умолчанию — в `Изображения\PRG`, обои для автосмены — в `Изображения\PRG\wallpapers`,
 настройки и лог — в `%LOCALAPPDATA%\PRG`. Фоновая смена обоев: `PRG.exe wallpaper start|stop|once|status|autostart on|off`.
+Галочка «Минимальный приоритет» (по умолчанию включена) запускает смену обоев в фоновом режиме Windows — для случая, когда свободной памяти мало; без неё смена идёт в несколько раз быстрее (приоритет BELOW_NORMAL).
 Собрать самому: `powershell -File build_exe.ps1` (результат — `dist\PRG.exe`).
 
 ## Установка (из исходников)
